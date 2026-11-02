@@ -223,8 +223,8 @@ Za pokretanje sistema potrebno je obezbijediti vlastitu konfiguraciju baze podat
 
 ### Mobilni prikaz
 
-![Mobilni prikaz aplikacije](screenshots/student-dashboard.png)
+![Mobilni prikaz aplikacije](screenshots/student-dashboard.jpeg)
 
 ### Povratne informacije
 
-![Prikaz povratnih informacija](screenshots/student-dashboard-message.png)
+![Prikaz povratnih informacija](screenshots/student-dashboard-message.jpeg)
