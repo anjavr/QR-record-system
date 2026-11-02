@@ -1,0 +1,99 @@
+.settings-page {
+  min-height: 100vh;
+  background: var(--color-lightest);
+}
+
+.topbar {
+  background: var(--color-darkest);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  border-radius: 6px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.settings-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.setting-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.setting-card h2 {
+  font-size: 1rem;
+  color: var(--color-darkest);
+  margin: 0 0 0.4rem;
+}
+
+.setting-description {
+  font-size: 0.85rem;
+  color: var(--color-dark);
+  margin-bottom: 1rem;
+}
+
+.setting-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.setting-form input {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.unit-label {
+  font-size: 0.85rem;
+  color: var(--color-dark);
+}
+
+.primary-btn {
+  background: var(--color-dark);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.setting-message {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--color-darkest);
+}
+
+.loading-hint {
+  text-align: center;
+  color: var(--color-dark);
+}

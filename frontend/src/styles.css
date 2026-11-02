@@ -1,0 +1,24 @@
+/* You can add global styles to this file, and also import other style files */
+:root {
+  --color-darkest: #1f363d;
+  --color-dark: #40798c;
+  --color-mid: #70a9a1;
+  --color-light: #9ec1a3;
+  --color-lightest: #cfe0c3;
+  --color-warning: #d32f2f;
+
+  --color-text: var(--color-darkest);
+  --color-bg: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  background: var(--color-lightest);
+}

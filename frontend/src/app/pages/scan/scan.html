@@ -1,0 +1,90 @@
+<div class="scan-page">
+  <header class="topbar">
+    <h1>Prijava prisustva</h1>
+    <button class="logout-btn" (click)="onLogoutClick()">Odjavi se</button>
+  </header>
+
+  <main class="scan-content">
+
+    <section class="scanner-section">
+      <h2>Skeniraj prisustvo</h2>
+      @if (removalNoticeMessage) {
+      <div class="removal-notice">
+        <span class="removal-notice-icon">⚠️</span>
+        <p>{{ removalNoticeMessage }}</p>
+      </div>
+      }
+
+      <div class="scanner-box">
+        <video #video class="scanner-video" [class.hidden]="state !== 'scanning'"></video>
+
+        @if (state === 'idle') {
+        <div class="scanner-placeholder">
+          <p>Skeniraj QR kod koji zaposleni prikazuje na ekranu</p>
+          <button class="primary-btn" (click)="startScanning()">Pokreni kameru</button>
+        </div>
+        }
+
+        @if (state === 'checking') {
+        <div class="scanner-placeholder">
+          <p>Provjera prisustva u toku...</p>
+        </div>
+        }
+
+        @if (state === 'success') {
+        <div class="scanner-result result-success">
+          <span class="result-icon">✓</span>
+          <p>{{ resultMessage }}</p>
+        </div>
+        }
+
+        @if (state === 'error') {
+        <div class="scanner-result result-error">
+          <span class="result-icon">✕</span>
+          <p>{{ resultMessage }}</p>
+          <button class="primary-btn" (click)="scanAgain()">Pokušaj ponovo</button>
+        </div>
+        }
+      </div>
+    </section>
+
+    <section class="courses-section">
+      <h2>Moji predmeti</h2>
+
+      @if (coursesLoading) {
+      <p class="empty-hint">Učitavanje...</p>
+      }
+
+      @if (!coursesLoading && myCourses.length === 0) {
+      <p class="empty-hint">Nisi upisan/a ni na jedan predmet.</p>
+      }
+
+      @if (!coursesLoading && myCourses.length > 0) {
+      <div class="course-list">
+        @for (course of myCourses; track course.courseId) {
+        <div class="course-summary-card">
+          <div class="course-summary-header">
+            <span class="course-summary-name">{{ course.courseName }}</span>
+            <div class="course-summary-groups">
+              @if (course.lectureGroup) {
+              <span class="group-badge group-badge-lecture">Predavanja: {{ course.lectureGroup }}</span>
+              }
+              @if (course.labGroup) {
+              <span class="group-badge group-badge-lab">Laboratorija: {{ course.labGroup }}</span>
+              }
+            </div>
+          </div>
+          <div class="course-summary-stats">
+            <span class="attendance-percentage">{{ course.attendancePercentage }}%</span>
+            <span class="attendance-count">{{ course.attendedSessions }} / {{ course.totalSessions }} časova</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="course.attendancePercentage"></div>
+          </div>
+        </div>
+        }
+      </div>
+      }
+    </section>
+  </main>
+</div>

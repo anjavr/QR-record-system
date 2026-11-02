@@ -1,0 +1,102 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: qr-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Sarajevo
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qr_evidencija
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - qr-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: qr-keycloak
+    restart: unless-stopped
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      #KC_HOSTNAME: keycloak
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - qr-network
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: qr-eureka
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+    networks:
+      - qr-network
+
+  evidencija-backend:
+    build: ./backend/evidencija-backend
+    container_name: qr-backend
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - keycloak
+      - eureka-server
+    environment:
+      TZ: Europe/Sarajevo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/qr_evidencija
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: https://172.20.10.2:8443/realms/evidencija
+      JWT_JWKS_URI: http://keycloak:8080/realms/evidencija/protocol/openid-connect/certs
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      QR_TOKEN_SECRET: ovo-je-tajni-kljuc-za-qr-tokene-najmanje-32-karaktera-dugacak
+    ports:
+      - "8081:8081"
+    networks:
+      - qr-network
+
+  analytics-service:
+    build: ./analytics-service
+    container_name: qr-analytics
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - eureka-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/qr_evidencija
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: https://172.20.10.2:8443/realms/evidencija
+      JWT_JWKS_URI: http://keycloak:8080/realms/evidencija/protocol/openid-connect/certs
+    ports:
+      - "8082:8082"
+    networks:
+      - qr-network
+
+  frontend:
+    build: ./frontend
+    container_name: qr-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+      - "443:443"
+      - "8443:8443"
+    networks:
+      - qr-network
+
+networks:
+  qr-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  keycloak-data:

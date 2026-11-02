@@ -1,0 +1,11 @@
+target/ 
+*.class 
+.idea/ 
+*.iml 
+node_modules/ 
+.angular/ 
+dist/ 
+frontend/cert.pem
+frontend/key.pem
+cert.pem
+key.pem

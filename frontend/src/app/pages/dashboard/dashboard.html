@@ -1,0 +1,351 @@
+<div class="dashboard-page">
+  <header class="topbar">
+    <h1>Evidencija prisustva</h1>
+    <div class="topbar-actions">
+      <button class="settings-btn" (click)="goToSettings()">⚙ Podešavanja</button>
+      <button class="logout-btn" (click)="onLogoutClick()">Odjavi se</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <button class="upload-trigger-btn" (click)="openUploadModal()">
+        + Upload nove liste
+      </button>
+
+      <div class="sidebar-header">
+        <h2>Moji predmeti</h2>
+        <select class="year-filter-select" (change)="onAcademicYearFilterChange($any($event.target).value)">
+          <option value="all">Sve godine</option>
+          @for (year of academicYears; track year) {
+          <option [value]="year" [selected]="selectedAcademicYear === year">{{ year }}</option>
+          }
+        </select>
+      </div>
+
+      @for (year of years; track year) {
+      <div class="year-group">
+        <h3>{{ year }}. godina</h3>
+        <div class="year-group-courses">
+          @for (course of coursesByYear.get(year); track course.id) {
+          <button class="course-item" [class.active]="selectedCourse?.id === course.id" (click)="selectCourse(course)">
+            {{ course.name }} - {{ course.academicYear }}
+          </button>
+          }
+        </div>
+      </div>
+      }
+
+      @if (courses.length === 0) {
+      <p class="empty-hint">Nema predmeta. Uploaduj listu prvo.</p>
+      }
+    </aside>
+
+    <main class="content">
+      @if (!selectedCourse) {
+      <p class="empty-hint">Izaberi predmet iz liste.</p>
+      }
+
+      @if (selectedCourse) {
+      <div class="course-header">
+        <h2>{{ selectedCourse.name }}</h2>
+        <div class="course-header-actions">
+          <button class="export-btn" (click)="onExportCourse('excel')" title="Kumulativna evidencija — Excel">Excel
+            (sve sesije)</button>
+          <button class="export-btn" (click)="onExportCourse('pdf')" title="Kumulativna evidencija — PDF">PDF (sve
+            sesije)</button>
+          <button class="export-btn" (click)="toggleAnalytics()">Analitika</button>
+          <button class="primary-btn" (click)="toggleCreateForm()">
+            {{ showCreateForm ? 'Otkaži' : '+ Nova sesija' }}
+          </button>
+        </div>
+      </div>
+
+      @if (showAnalytics) {
+      <div class="analytics-panel">
+        <div class="analytics-tabs">
+          <button class="analytics-tab-btn" [class.tab-active]="activeAnalyticsTab === 'by-student'"
+            (click)="selectAnalyticsTab('by-student')">Po studentu</button>
+          <button class="analytics-tab-btn" [class.tab-active]="activeAnalyticsTab === 'by-session'"
+            (click)="selectAnalyticsTab('by-session')">Po sesiji</button>
+          <button class="analytics-tab-btn" [class.tab-active]="activeAnalyticsTab === 'trend'"
+            (click)="selectAnalyticsTab('trend')">Trend prisustva</button>
+          <button class="analytics-tab-btn" [class.tab-active]="activeAnalyticsTab === 'threshold'"
+            (click)="selectAnalyticsTab('threshold')">Ispod praga</button>
+          <button class="analytics-tab-btn" [class.tab-active]="activeAnalyticsTab === 'groups'"
+            (click)="selectAnalyticsTab('groups')">Grupe</button>
+        </div>
+
+        <div class="analytics-content">
+          @if (activeAnalyticsTab === 'by-student') {
+          @if (attendanceByStudent.length === 0) {
+          <p class="empty-hint">Nema podataka o prisustvu za ovaj predmet.</p>
+          } @else {
+          <div class="analytics-table-wrapper">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th>Ime</th>
+                  <th>Prezime</th>
+                  <th>Dolazaka</th>
+                  <th>Ukupno</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of attendanceByStudent; track s.studentId) {
+                <tr [class.low-attendance]="s.percentage < (belowThresholdResult?.threshold ?? 60)">
+                  <td>{{ s.firstName }}</td>
+                  <td>{{ s.lastName }}</td>
+                  <td>{{ s.attended }}</td>
+                  <td>{{ s.totalSessions }}</td>
+                  <td>{{ s.percentage }}%</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+          }
+
+          @if (activeAnalyticsTab === 'by-session') {
+          @if (attendanceBySession.length === 0) {
+          <p class="empty-hint">Nema evidentiranih sesija za ovaj predmet.</p>
+          } @else {
+          <div class="analytics-table-wrapper">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th>Datum</th>
+                  <th>Prisutno</th>
+                  <th>Ukupno upisano</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of attendanceBySession; track s.sessionId) {
+                <tr>
+                  <td>{{ formatDate(s.date) }}</td>
+                  <td>{{ s.presentCount }}</td>
+                  <td>{{ s.totalEnrolled }}</td>
+                  <td>{{ s.attendancePercentage }}%</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+          }
+
+          @if (activeAnalyticsTab === 'trend') {
+          @if (attendanceBySession.length > 1) {
+          <svg class="trend-chart" viewBox="0 0 400 120">
+            <polyline [attr.points]="trendChartPoints" fill="none" stroke="var(--color-mid)" stroke-width="2" />
+          </svg>
+          } @else {
+          <p class="empty-hint">Nedovoljno sesija za prikaz trenda.</p>
+          }
+          }
+
+          @if (activeAnalyticsTab === 'threshold') {
+          @if (belowThresholdResult) {
+          <p class="threshold-label">Prag: {{ belowThresholdResult.threshold }}%</p>
+          @if (belowThresholdResult.students.length === 0) {
+          <p class="empty-hint">Nema studenata ispod praga.</p>
+          } @else {
+          <ul class="below-threshold-list">
+            @for (s of belowThresholdResult.students; track s.studentId) {
+            <li>{{ s.firstName }} {{ s.lastName }} — {{ s.percentage }}%</li>
+            }
+          </ul>
+          }
+          }
+          }
+
+          @if (activeAnalyticsTab === 'groups') {
+          @if (groupComparison.length === 0) {
+          <p class="empty-hint">Nema podataka o grupama.</p>
+          } @else {
+          <div class="analytics-table-wrapper">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th>Grupa</th>
+                  <th>Prosječan % prisustva</th>
+                  <th>Broj sesija</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (g of groupComparison; track g.group) {
+                <tr>
+                  <td>{{ g.group }}</td>
+                  <td>{{ g.averageAttendancePercentage }}%</td>
+                  <td>{{ g.sessionsCounted }}</td>
+                </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          }
+          }
+        </div>
+      </div>
+      }
+
+      @if (showCreateForm) {
+      <form class="create-form" (ngSubmit)="onCreateSession()">
+        <label>
+          Tip aktivnosti
+          <select [(ngModel)]="newSession.activityType" name="activityType" (change)="onActivityTypeChange()">
+            <option value="LECTURE">Predavanje</option>
+            <option value="TUTORIAL">Auditorne vježbe</option>
+            <option value="LAB">Laboratorijske vježbe</option>
+          </select>
+        </label>
+        <label>
+          Datum
+          <input type="date" [(ngModel)]="newSession.date" name="date" required />
+        </label>
+        <label>
+          Termin
+          <input type="time" [(ngModel)]="newSession.startTime" name="startTime" required />
+        </label>
+        <label>
+          Grupa
+          <select [(ngModel)]="newSession.groupLabel" name="groupLabel" required>
+            <option value="" disabled>Izaberi grupu</option>
+            @for (label of groupLabels; track label) {
+            <option [value]="label">{{ label }}</option>
+            }
+          </select>
+        </label>
+        <button type="submit" class="primary-btn">Kreiraj sesiju</button>
+      </form>
+      }
+
+      <div class="session-tabs">
+        <button class="tab-btn" [class.tab-active]="activeTab === 'CREATED'" (click)="selectTab('CREATED')">
+          Kreirane ({{ sessionCounts.CREATED }})
+        </button>
+        <button class="tab-btn" [class.tab-active]="activeTab === 'ACTIVE'" (click)="selectTab('ACTIVE')">
+          Aktivne ({{ sessionCounts.ACTIVE }})
+        </button>
+        <button class="tab-btn" [class.tab-active]="activeTab === 'CLOSED'" (click)="selectTab('CLOSED')">
+          Zatvorene ({{ sessionCounts.CLOSED }})
+        </button>
+      </div>
+
+      <div class="sessions-list">
+        @for (session of filteredSessions; track session.id) {
+        <div class="session-card" [class.session-active]="session.status === 'ACTIVE'">
+          <div class="session-info">
+            <span class="session-type">{{ getActivityLabel(session.activityType) }}</span>
+            <span class="session-date">{{ formatDate(session.date) }} u {{ formatTime(session.startTime) }}</span>
+            <span class="session-status status-{{ session.status.toLowerCase() }}">{{ getStatusLabel(session.status)
+              }}</span>
+          </div>
+          <div class="session-actions">
+            @if (session.status === 'CREATED') {
+            <button class="primary-btn" (click)="onActivate(session)">Aktiviraj</button>
+            }
+            @if (session.status === 'ACTIVE') {
+            <button class="danger-btn" (click)="onClose(session)">Zatvori</button>
+            }
+            @if (session.status === 'CLOSED') {
+            <button class="export-btn" (click)="onExportSession(session.id, 'excel')"
+              title="Izvezi u Excel">Excel</button>
+            <button class="export-btn" (click)="onExportSession(session.id, 'pdf')" title="Izvezi u PDF">PDF</button>
+            }
+          </div>
+        </div>
+        }
+
+        @if (filteredSessions.length === 0) {
+        <p class="empty-hint">Nema sesija u ovoj kategoriji.</p>
+        }
+      </div>
+
+      @if (activeTab === 'ACTIVE' && activeSession && qrCodeBase64) {
+      <div class="active-session-panel">
+        <div class="qr-panel">
+          <h3>QR kod za prijavu</h3>
+          <img [src]="'data:image/png;base64,' + qrCodeBase64" alt="QR kod" />
+          <p class="qr-hint">Kod se automatski osvježava</p>
+        </div>
+
+        <div class="attendance-panel">
+          <h3>Prijavljeni studenti ({{ attendanceList.length }})</h3>
+          <ul class="attendance-list">
+            @for (record of attendanceList; track record.id) {
+            <li [class.suspicious-entry]="record.suspicious">
+              <span class="attendee-name">
+                {{ record.student.firstName }} {{ record.student.lastName }}
+                @if (record.suspicious) {
+                <span class="suspicious-badge" title="Ista IP adresa kao još neko na ovoj sesiji">⚠️</span>
+                }
+              </span>
+              <span class="student-number">{{ record.student.studentNumber }}</span>
+              <span class="check-in-time">{{ record.checkInTime | slice:11:16 }}</span>
+              <button class="delete-record-btn" (click)="onDeleteAttendanceRecord(record.id)"
+                title="Ukloni prijavu">🗑</button>
+            </li>
+            }
+            @if (attendanceList.length === 0) {
+            <li class="empty-hint">Još nema prijavljenih studenata</li>
+            }
+          </ul>
+        </div>
+      </div>
+      }
+      }
+    </main>
+  </div>
+
+  @if (showUploadModal) {
+  <div class="modal-overlay" (click)="closeUploadModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Upload liste predmeta i studenata</h3>
+        <button class="modal-close" (click)="closeUploadModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <label class="year-input-label">
+          Akademska godina
+          <input type="number" [(ngModel)]="academicYear" name="academicYear" placeholder="npr. 2025" min="2000"
+            max="2100" />
+        </label>
+
+        <label class="file-drop">
+          <input type="file" accept=".xlsx" (change)="onFileSelected($event)" hidden />
+          @if (selectedFile) {
+          <span class="file-name">📄 {{ selectedFile.name }}</span>
+          } @else {
+          <span class="file-placeholder">Klikni da izabereš .xlsx fajl</span>
+          }
+        </label>
+
+        @if (uploadMessage) {
+        <p class="modal-message" [class.success]="uploadSuccess" [class.error]="!uploadSuccess">
+          {{ uploadMessage }}
+        </p>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="secondary-btn" (click)="closeUploadModal()">Otkaži</button>
+        @if (showReplaceOption) {
+        <button class="danger-btn" [disabled]="uploadInProgress" (click)="onConfirmReplace()">
+          {{ uploadInProgress ? 'Zamjenjivanje...' : 'Zamijeni postojeći' }}
+        </button>
+        } @else {
+        <button class="primary-btn" [disabled]="!selectedFile || !academicYear || uploadInProgress"
+          (click)="onUpload()">
+          {{ uploadInProgress ? 'Uploadovanje...' : 'Uploaduj' }}
+        </button>
+        }
+      </div>
+    </div>
+  </div>
+  }
+</div>

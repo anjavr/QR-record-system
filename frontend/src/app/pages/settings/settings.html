@@ -1,0 +1,63 @@
+<div class="settings-page">
+  <header class="topbar">
+    <button class="back-btn" (click)="goBack()">← Nazad</button>
+    <h1>Podešavanja sistema</h1>
+  </header>
+
+  <main class="settings-content">
+    @if (loading) {
+    <p class="loading-hint">Učitavanje...</p>
+    } @else {
+    <div class="setting-card">
+      <h2>Institucionalni domen</h2>
+      <p class="setting-description">
+        Domen koji se koristi za provjeru email adresa pri prijavi i generisanje email-a studenata
+        (npr. ime.prezime&#64;domen).
+      </p>
+      <div class="setting-form">
+        <input type="text" [(ngModel)]="domain" placeholder="npr. etf.unibl.org" />
+        <button class="primary-btn" [disabled]="savingDomain" (click)="onSaveDomain()">
+          {{ savingDomain ? 'Čuvanje...' : 'Sačuvaj' }}
+        </button>
+      </div>
+      @if (domainMessage) {
+      <p class="setting-message">{{ domainMessage }}</p>
+      }
+    </div>
+
+    <div class="setting-card">
+      <h2>Interval osvježavanja QR koda</h2>
+      <p class="setting-description">
+        Koliko sekundi je QR kod validan prije nego se automatski generiše novi, tokom aktivne sesije.
+      </p>
+      <div class="setting-form">
+        <input type="number" [(ngModel)]="qrRefreshInterval" min="5" max="300" />
+        <span class="unit-label">sekundi</span>
+        <button class="primary-btn" [disabled]="savingInterval" (click)="onSaveInterval()">
+          {{ savingInterval ? 'Čuvanje...' : 'Sačuvaj' }}
+        </button>
+      </div>
+      @if (intervalMessage) {
+      <p class="setting-message">{{ intervalMessage }}</p>
+      }
+    </div>
+
+    <div class="setting-card">
+      <h2>Prag niskog prisustva</h2>
+      <p class="setting-description">
+        Studenti sa prisustvom ispod ovog procenta se posebno izdvajaju u analitici.
+      </p>
+      <div class="setting-form">
+        <input type="number" [(ngModel)]="attendanceThreshold" min="0" max="100" />
+        <span class="unit-label">%</span>
+        <button class="primary-btn" [disabled]="savingThreshold" (click)="onSaveThreshold()">
+          {{ savingThreshold ? 'Čuvanje...' : 'Sačuvaj' }}
+        </button>
+      </div>
+      @if (thresholdMessage) {
+      <p class="setting-message">{{ thresholdMessage }}</p>
+      }
+    </div>
+    }
+  </main>
+</div>
